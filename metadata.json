@@ -1,0 +1,6 @@
+{
+  "name": "Veritas - Misleading News Detector",
+  "description": "Heuristic news credibility analysis engine with transparent risk scoring and explainable reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
