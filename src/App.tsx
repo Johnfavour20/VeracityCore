@@ -10,6 +10,8 @@ import { AuditReport } from './components/AuditReport';
 import { SubmissionWorkspace } from './components/SubmissionWorkspace';
 import { RepositoryView } from './components/RepositoryView';
 import { AdminDashboard } from './components/AdminDashboard';
+import { DetailedRiskExplanation } from './components/DetailedRiskExplanation';
+import { AdminLogin } from './components/AdminLogin';
 import { MethodologyModal } from './components/MethodologyModal';
 import { AnalyzerModal } from './components/AnalyzerModal';
 import { AdminModal } from './components/AdminModal';
@@ -18,10 +20,11 @@ import { Footer } from './components/Footer';
 import { Search } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'landing' | 'analysis' | 'repository' | 'admin'>('analysis');
+  const [activeTab, setActiveTab] = useState<'landing' | 'analysis' | 'repository' | 'admin' | 'explanation'>('analysis');
   const [activeReport, setActiveReport] = useState<AnalysisReport>(SAMPLE_ARTICLES[0].presetReport);
   const [savedReports, setSavedReports] = useState<AnalysisReport[]>([]);
   
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isAnalyzerOpen, setIsAnalyzerOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -91,6 +94,15 @@ export default function App() {
   const isCurrentReportSaved = savedReports.some((r) => r.reportId === activeReport.reportId);
 
   if (activeTab === 'admin') {
+    if (!isAdminAuthenticated) {
+      return (
+        <AdminLogin
+          onLoginSuccess={() => setIsAdminAuthenticated(true)}
+          onReturnToLanding={() => setActiveTab('landing')}
+        />
+      );
+    }
+
     return (
       <>
         <AdminDashboard
@@ -105,7 +117,10 @@ export default function App() {
             }, 100);
           }}
           onOpenRuleConfig={() => setIsAdminOpen(true)}
-          onExitAdmin={() => setActiveTab('analysis')}
+          onExitAdmin={() => {
+            setIsAdminAuthenticated(false);
+            setActiveTab('landing');
+          }}
         />
 
         <AdminModal
@@ -123,13 +138,34 @@ export default function App() {
         onTabChange={(tab) => setActiveTab(tab)}
         onOpenMethodology={() => setIsMethodologyOpen(true)}
         onOpenAnalyzer={() => setIsAnalyzerOpen(true)}
-        onOpenAdmin={() => setIsAdminOpen(true)}
+        onOpenAdmin={() => setActiveTab('admin')}
         onOpenHistory={() => setIsHistoryOpen(true)}
         savedCount={savedReports.length}
       />
 
       <main>
-        {activeTab === 'analysis' ? (
+        {activeTab === 'explanation' ? (
+          <DetailedRiskExplanation
+            report={activeReport}
+            onReturnToResults={() => {
+              setActiveTab('analysis');
+              setTimeout(() => {
+                const element = document.getElementById('audit-report');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                }
+              }, 100);
+            }}
+            onAnalyzeAnother={() => {
+              setActiveTab('analysis');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onReturnHome={() => {
+              setActiveTab('landing');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        ) : activeTab === 'analysis' ? (
           <>
             <SubmissionWorkspace
               onAnalysisComplete={handleAnalysisComplete}
@@ -145,6 +181,10 @@ export default function App() {
               report={activeReport}
               onSaveReport={handleSaveReport}
               isSaved={isCurrentReportSaved}
+              onViewDetailedExplanation={() => {
+                setActiveTab('explanation');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               onAnalyzeAnother={() => {
                 setActiveTab('analysis');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -192,6 +232,10 @@ export default function App() {
               report={activeReport}
               onSaveReport={handleSaveReport}
               isSaved={isCurrentReportSaved}
+              onViewDetailedExplanation={() => {
+                setActiveTab('explanation');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               onAnalyzeAnother={() => {
                 setActiveTab('analysis');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -224,7 +268,7 @@ export default function App() {
         </section>
       </main>
 
-      <Footer onOpenAdmin={() => setIsAdminOpen(true)} />
+      <Footer onOpenAdmin={() => setActiveTab('admin')} />
 
       {/* Modals & Drawers */}
       <AnalyzerModal

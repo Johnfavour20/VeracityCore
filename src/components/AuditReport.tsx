@@ -32,6 +32,7 @@ interface AuditReportProps {
   isSaved?: boolean;
   onAnalyzeAnother?: () => void;
   onReturnHome?: () => void;
+  onViewDetailedExplanation?: () => void;
 }
 
 export const AuditReport: React.FC<AuditReportProps> = ({
@@ -39,7 +40,8 @@ export const AuditReport: React.FC<AuditReportProps> = ({
   onSaveReport,
   isSaved = false,
   onAnalyzeAnother,
-  onReturnHome
+  onReturnHome,
+  onViewDetailedExplanation
 }) => {
   const [copied, setCopied] = useState(false);
   const [showVerification, setShowVerification] = useState(true);
@@ -230,6 +232,16 @@ ${report.suggestedVerification.map((v) => `- ${v}`).join('\n')}
             <Download className="w-3.5 h-3.5" />
             <span>Export</span>
           </button>
+
+          {onViewDetailedExplanation && (
+            <button
+              onClick={onViewDetailedExplanation}
+              className="text-xs font-semibold px-3 py-2 rounded-lg bg-[#e8f0fe] border border-[#adc6ff] text-[#0058bd] hover:bg-[#d8e2ff] transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Detailed Risk Explanation</span>
+            </button>
+          )}
 
           {onReturnHome && (
             <button

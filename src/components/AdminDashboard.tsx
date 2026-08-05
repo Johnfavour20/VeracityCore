@@ -45,7 +45,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onOpenRuleConfig,
   onExitAdmin,
 }) => {
-  const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'rules' | 'sources' | 'records' | 'logs'>('records');
+  const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'rules' | 'sources' | 'records' | 'logs'>('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -149,9 +149,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <nav className="flex flex-col gap-1.5 text-sm font-semibold">
             {[
               { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
-              { id: 'records', label: 'Assessment Records', icon: FileText },
               { id: 'rules', label: 'Heuristic Rules', icon: Sliders },
-              { id: 'sources', label: 'Source Manager', icon: Database },
+              { id: 'sources', label: 'Source Credibility', icon: Database },
+              { id: 'records', label: 'Assessment Records', icon: FileText },
               { id: 'logs', label: 'Audit Logs', icon: History }
             ].map((item) => {
               const Icon = item.icon;
