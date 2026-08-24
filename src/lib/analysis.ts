@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import type { GoogleGenAI as GoogleGenAIType } from "@google/genai";
 
 export interface AnalysisRequest {
   url?: string;
@@ -34,19 +34,50 @@ export interface AnalysisResult {
   suggestedVerification: string[];
 }
 
-export const getGenAIClient = (): GoogleGenAI | null => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+let googleGenAIModule: { GoogleGenAI: any; Type: any } | null = null;
+let googleGenAIModuleLoadAttempted = false;
+let googleGenAIModuleLoadError: unknown = null;
+
+async function loadGoogleGenAIModule(): Promise<{
+  GoogleGenAI: any;
+  Type: any;
+} | null> {
+  if (googleGenAIModuleLoadAttempted) {
+    if (googleGenAIModule) return googleGenAIModule;
     return null;
   }
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: {
-      headers: {
-        "User-Agent": "aistudio-build",
+  googleGenAIModuleLoadAttempted = true;
+  try {
+    const mod = await import("@google/genai");
+    googleGenAIModule = { GoogleGenAI: mod.GoogleGenAI, Type: mod.Type };
+    return googleGenAIModule;
+  } catch (e) {
+    googleGenAIModuleLoadError = e;
+    console.warn("[analysis] Failed to load @google/genai module:", e);
+    return null;
+  }
+}
+
+export const getGenAIClient = async (): Promise<GoogleGenAIType | null> => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === "MY_GEMINI_API_KEY" || apiKey.trim().length === 0) {
+    return null;
+  }
+  const mod = await loadGoogleGenAIModule();
+  if (!mod) return null;
+  try {
+    return new mod.GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          "User-Agent": "aistudio-build",
+        },
       },
-    },
-  });
+    }) as GoogleGenAIType;
+  } catch (e) {
+    console.warn("[analysis] Failed to create GenAI client:", e);
+    return null;
+  }
 };
 
 export function generateFallbackAnalysis(
@@ -297,10 +328,16 @@ export async function runAIAnalysis(
     );
   }
 
-  const ai = getGenAIClient();
+  const ai = await getGenAIClient();
   if (!ai) {
     return generateFallbackAnalysis(title, url, content);
   }
+
+  const mod = await loadGoogleGenAIModule();
+  if (!mod) {
+    return generateFallbackAnalysis(title, url, content);
+  }
+  const { Type } = mod;
 
   const prompt = `You are the Veritas Heuristic Analysis Engine, an authoritative news credibility assessment AI.
 Analyze the following article submission and return a structured JSON report evaluating its risk of being misleading, clickbait, or unverified misinformation.
